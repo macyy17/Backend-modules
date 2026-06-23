@@ -68,3 +68,37 @@ Current task:
 write in chat. so that i can updated there.
 
 ---
+
+Next-up:
+- now it is time to create translator
+- speed things up. and create a fully working translator module
+- also test with module server
+
+pro tips:
+- run commands in batching (use batch rule and chain rule from system information resource)
+- if blocked, use round-robin rule and replace rules. try harder. fallback to big bash if failed (read problem resource)
+
+end goal:
+- our translator is ready with tested.
+
+module:
+- Create a module named `translator`
+- that that gets requests at `/translate` (in get or post both are accepted)
+- it uses groq api (api key from .env) and asks llm to translate that (use llama 3.3 70b versatile model as it supports tool call). with tool cal ass required
+- and it returns the translation
+- also supports any language (user can specify user language as auto or specified. as well as output language)
+
+endpoints = 1 only
+methods = 2 (GET and POST)
+inputs = 3 fields for /translate (text, from and to)
+
+approach:
+- first stest groq (with function call) using api from .env
+- then add endpoint
+- the complete the module related standards
+
+Use key:
+`reacted` for groq call (translation)
+
+
+---

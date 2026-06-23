@@ -102,3 +102,18 @@ Use key:
 
 
 ---
+
+Next-up: in `./docs/` write details about module server and how to create a module.
+
+and make sure our module server is not hardcoded, it can pick any module.
+
+quick check:
+- can we use .env vars from module itself ? (other than db)
+- and our module server can override them if want or use.
+- so that we keep groq key in module's own .env
+- and keep the db creds as well over there
+- so that the module server remains generic.
+
+make required changes and write docs/ after that (if / when successfull)
+
+---

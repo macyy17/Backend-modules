@@ -6,7 +6,10 @@ import { loadModule } from './modules/loadModule.js';
 import { loadModuleRoutes } from './modules/moduleRoutes.js';
 import { loadRunnerConfig } from './config/loadRunnerConfig.js';
 import { createDatabase } from './database/createDatabase.js';
-loadEnvFile();
+loadEnvFile(undefined, {
+  override: true,
+  preserveKeys: ['MODULE', 'PORT', 'DATABASE_URL', 'POSTGRES_URL', 'MODULE_RUNNER_DATABASE_URL'],
+});
 
 async function main(): Promise<void> {
   const config = loadRunnerConfig();

@@ -1,6 +1,11 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
+export type LoadEnvFileOptions = {
+  override?: boolean;
+  preserveKeys?: string[];
+};
+
 function clean_env_value(value: string): string {
   const trimmed = value.trim();
 
@@ -14,11 +19,15 @@ function clean_env_value(value: string): string {
   return trimmed;
 }
 
-export function loadEnvFile(file_path = path.resolve(process.cwd(), '.env')): Record<string, string> {
+export function loadEnvFile(
+  file_path = path.resolve(process.cwd(), '.env'),
+  options: LoadEnvFileOptions = {},
+): Record<string, string> {
   if (!fs.existsSync(file_path)) {
     return {};
   }
 
+  const preserve_keys = new Set(options.preserveKeys ?? []);
   const parsed: Record<string, string> = {};
   const content = fs.readFileSync(file_path, 'utf8');
 
@@ -40,7 +49,11 @@ export function loadEnvFile(file_path = path.resolve(process.cwd(), '.env')): Re
 
     parsed[key] = value;
 
-    if (process.env[key] === undefined || process.env[key] === '') {
+    const has_existing_value = process.env[key] !== undefined && process.env[key] !== '';
+    const should_preserve_existing = preserve_keys.has(key) && has_existing_value;
+    const should_set_value = options.override === true || !has_existing_value;
+
+    if (should_set_value && !should_preserve_existing) {
       process.env[key] = value;
     }
   }

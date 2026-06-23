@@ -1,0 +1,55 @@
+{
+  "name": "users",
+  "title": "Users",
+  "description": "User login, logout, and internal session status module with one user role.",
+  "endpoints": [
+    {
+      "id": "login-page",
+      "method": "GET",
+      "path": "/login",
+      "title": "Login Page",
+      "description": "Render the browser login page.",
+      "headers": {},
+      "cookies": {},
+      "query": {},
+      "body": null,
+      "response": "HTML login page"
+    },
+    {
+      "id": "login",
+      "method": "POST",
+      "path": "/login",
+      "title": "Login",
+      "description": "Log in with email and credential. Sets the users_session cookie.",
+      "headers": { "content-type": "application/json" },
+      "cookies": {},
+      "query": {},
+      "body": { "email": "user@example.com", "credential": "credential123" },
+      "response": { "authenticated": true, "user": { "email": "user@example.com", "role": "user" }, "expiresAt": "..." }
+    },
+    {
+      "id": "auth-status",
+      "method": "GET",
+      "path": "/internal/auth/status",
+      "title": "Internal Auth Status",
+      "description": "Check whether the current request has a valid logged-in session.",
+      "headers": {},
+      "cookies": { "users_session": "<session key>" },
+      "query": {},
+      "body": null,
+      "response": { "authenticated": true, "user": { "email": "user@example.com", "role": "user" } }
+    },
+    {
+      "id": "logout",
+      "method": "POST",
+      "path": "/logout",
+      "title": "Logout",
+      "description": "Delete the current session and clear the session cookie.",
+      "headers": {},
+      "cookies": { "users_session": "<session key>" },
+      "query": {},
+      "body": null,
+      "response": { "loggedOut": true }
+    }
+  ]
+}

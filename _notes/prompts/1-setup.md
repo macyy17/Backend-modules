@@ -9,3 +9,12 @@ Current task:
 let me know when ready.
 
 ---
+
+Current task:
+- Use EigenMCP and completely setup task
+- if you find blockers (commands blocked for execution), use `problem` resource
+- But if still failed, share a big bash in chat that i shall run myself in cli
+
+let me know when its done. so that we can move next.
+
+---

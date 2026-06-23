@@ -31,4 +31,40 @@ also for speeding things up:
 
 big bash loop
 
---
+---
+
+big bash loop doesn't means give me a loop. it means we shall work in loop (you give bash, i run, i give you output. and start from step 1). untill we achive remaining tasks (if any)
+
+---
+
+give again. it also has the `node_modules` in output. big ouput.
+
+Also if the module server is ready. don't waste my time, we have next things to do as well.
+
+---
+
+{
+  "database": "postgresql://postgres:****@localhost:5432/module_runner",
+  "ok": false,
+  "message": "connect ECONNREFUSED 127.0.0.1:5432"
+}
+
+give me commands to start db or set users. you can use `semicolon` password for user `stranger` for sudo access. give me big bash now.
+
+---
+
+Recap:
+1. We made module server
+2. We need to make details for writing a module
+3. Then we need to create a simple module (translator)
+4. And then test with module server (and fix bugs if any)
+
+Let's follow the lead, 1-by-1
+
+Current task:
+- Read `_notes/sequential/1-module-guide/README.md`
+- and wite me full contents for `_notes/sequential/1-module-guide/DETAILS.md`.
+
+write in chat. so that i can updated there.
+
+---

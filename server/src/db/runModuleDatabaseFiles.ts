@@ -7,12 +7,13 @@ import { loadRunnerConfig } from '../config/loadRunnerConfig.js';
 import { discoverModules } from '../modules/discoverModules.js';
 import type { DatabaseService, ModuleEntry } from '../types.js';
 
-type DbTaskKind = 'migration' | 'seed';
+type DbTaskKind = 'migration' | 'seed' | 'reset';
 
 type DbTaskOptions = {
   kind: DbTaskKind;
   moduleName?: string;
   force: boolean;
+  refresh: boolean;
 };
 
 type SqlFile = {
@@ -43,9 +44,10 @@ function makeHistoryTableSql(): string {
 function parseArgs(argv: string[]): DbTaskOptions {
   const command = argv[2];
   const options: DbTaskOptions = {
-    kind: command === 'seed' ? 'seed' : 'migration',
+    kind: command === 'seed' ? 'seed' : command === 'reset' ? 'reset' : 'migration',
     moduleName: process.env.MODULE,
-    force: false,
+    force: process.env.DB_FORCE === '1',
+    refresh: process.env.DB_REFRESH === '1',
   };
 
   for (let index = 3; index < argv.length; index += 1) {
@@ -53,6 +55,11 @@ function parseArgs(argv: string[]): DbTaskOptions {
 
     if (value === '--force') {
       options.force = true;
+      continue;
+    }
+
+    if (value === '--refresh') {
+      options.refresh = true;
       continue;
     }
 
@@ -67,18 +74,30 @@ function parseArgs(argv: string[]): DbTaskOptions {
     }
   }
 
+  if (options.kind !== 'migration' && options.refresh) {
+    throw new Error('--refresh is only supported with db:migrate. Use db:reset for reset + migrate + seed.');
+  }
+
   return options;
 }
 
 function taskFolderName(kind: DbTaskKind): string {
-  return kind === 'migration' ? 'migrations' : 'seeders';
+  if (kind === 'migration') {
+    return 'migrations';
+  }
+
+  if (kind === 'seed') {
+    return 'seeders';
+  }
+
+  return 'reset';
 }
 
 async function pathExists(filePath: string): Promise<boolean> {
   try {
     await fs.access(filePath);
     return true;
-  } catch (_error) {
+  } catch {
     return false;
   }
 }
@@ -135,9 +154,25 @@ function makeHistorySelectSql(): string {
   ].join('\n');
 }
 
-async function hasAppliedFile(database: DatabaseService, moduleName: string, kind: DbTaskKind, fileName: string): Promise<boolean> {
+async function hasAppliedFile(
+  database: DatabaseService,
+  moduleName: string,
+  kind: DbTaskKind,
+  fileName: string,
+): Promise<boolean> {
   const result = await database.query(makeHistorySelectSql(), [moduleName, kind, fileName]);
   return result.rows.length > 0;
+}
+
+function makeHistoryClearSql(): string {
+  return [
+    'DELETE FROM ' + HISTORY_TABLE_NAME,
+    'WHERE module_name = $1',
+  ].join('\n');
+}
+
+async function clearModuleHistory(database: DatabaseService, moduleName: string): Promise<void> {
+  await database.query(makeHistoryClearSql(), [moduleName]);
 }
 
 function makeHistoryUpsertSql(): string {
@@ -175,7 +210,7 @@ async function applySqlFile(
   file: SqlFile,
   force: boolean,
 ): Promise<'applied' | 'skipped'> {
-  if (!force && await hasAppliedFile(database, moduleEntry.name, kind, file.fileName)) {
+  if (!force && kind !== 'reset' && await hasAppliedFile(database, moduleEntry.name, kind, file.fileName)) {
     return 'skipped';
   }
 
@@ -185,24 +220,69 @@ async function applySqlFile(
   return 'applied';
 }
 
-async function runForModule(moduleEntry: ModuleEntry, kind: DbTaskKind, force: boolean): Promise<void> {
+async function runTaskFiles(
+  database: DatabaseService,
+  moduleEntry: ModuleEntry,
+  kind: DbTaskKind,
+  force: boolean,
+  allowMissing: boolean,
+): Promise<void> {
+  const files = await readSqlFiles(moduleEntry, kind);
+
+  if (files.length === 0) {
+    if (!allowMissing) {
+      console.log(`[${moduleEntry.name}] no ${taskFolderName(kind)} files found`);
+    }
+    return;
+  }
+
+  for (const file of files) {
+    const result = await applySqlFile(database, moduleEntry, kind, file, force);
+    const label = result === 'applied' ? (force ? 'forced' : 'applied') : 'skipped';
+    console.log(`[${moduleEntry.name}] ${label} ${taskFolderName(kind)}/${file.fileName}`);
+  }
+}
+
+async function refreshModule(database: DatabaseService, moduleEntry: ModuleEntry): Promise<void> {
+  const resetFiles = await readSqlFiles(moduleEntry, 'reset');
+
+  if (resetFiles.length > 0) {
+    for (const file of resetFiles) {
+      await applySqlFile(database, moduleEntry, 'reset', file, true);
+      console.log(`[${moduleEntry.name}] reset reset/${file.fileName}`);
+    }
+  } else {
+    console.log(`[${moduleEntry.name}] no reset files found; migrations must handle recreation safely`);
+  }
+
+  await clearModuleHistory(database, moduleEntry.name);
+  console.log(`[${moduleEntry.name}] cleared database lifecycle history`);
+  await runTaskFiles(database, moduleEntry, 'migration', true, false);
+}
+
+async function resetModule(database: DatabaseService, moduleEntry: ModuleEntry): Promise<void> {
+  await refreshModule(database, moduleEntry);
+  await runTaskFiles(database, moduleEntry, 'seed', true, false);
+}
+
+async function runForModule(moduleEntry: ModuleEntry, options: DbTaskOptions): Promise<void> {
   const config = loadRunnerConfig({ moduleEnvPath: path.join(moduleEntry.path, '.env') });
   const database = createDatabase(config.databaseUrl);
 
   try {
     await ensureHistoryTable(database);
-    const files = await readSqlFiles(moduleEntry, kind);
 
-    if (files.length === 0) {
-      console.log(`[${moduleEntry.name}] no ${taskFolderName(kind)} files found`);
+    if (options.kind === 'reset') {
+      await resetModule(database, moduleEntry);
       return;
     }
 
-    for (const file of files) {
-      const result = await applySqlFile(database, moduleEntry, kind, file, force);
-      const label = result === 'applied' ? (force ? 'forced' : 'applied') : 'skipped';
-      console.log(`[${moduleEntry.name}] ${label} ${taskFolderName(kind)}/${file.fileName}`);
+    if (options.kind === 'migration' && options.refresh) {
+      await refreshModule(database, moduleEntry);
+      return;
     }
+
+    await runTaskFiles(database, moduleEntry, options.kind, options.force, false);
   } finally {
     await database.close();
   }
@@ -221,10 +301,13 @@ async function main(): Promise<void> {
     throw new Error(`No module matched "${options.moduleName ?? 'all'}". Available modules: ${available}`);
   }
 
-  console.log(`Running ${taskFolderName(options.kind)} for ${selectedModules.length} module(s). Force: ${options.force ? 'yes' : 'no'}`);
+  console.log(
+    `Running ${taskFolderName(options.kind)} for ${selectedModules.length} module(s). ` +
+    `Force: ${options.force ? 'yes' : 'no'}. Refresh: ${options.refresh ? 'yes' : 'no'}`,
+  );
 
   for (const moduleEntry of selectedModules) {
-    await runForModule(moduleEntry, options.kind, options.force);
+    await runForModule(moduleEntry, options);
   }
 }
 

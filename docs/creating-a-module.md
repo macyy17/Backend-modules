@@ -395,3 +395,37 @@ A module is done when:
 - [ ] `/runner/config` shows expected routes.
 - [ ] `/db/health` passes when DB is required.
 - [ ] endpoint calls pass through `/app` or curl.
+
+## Database Lifecycle
+
+When a module owns database tables, add SQL files under:
+
+```txt
+db/migrations/
+db/seeders/
+db/reset/
+```
+
+Run from `server/`:
+
+```bash
+npm run db:migrate -- --module <module-name>
+npm run db:seed -- --module <module-name>
+npm run db:reset -- --module <module-name>
+```
+
+`db:migrate` and `db:seed` track executed files and skip already-applied SQL.
+
+Use `--force` to rerun recorded files:
+
+```bash
+npm run db:migrate -- --module <module-name> --force
+npm run db:seed -- --module <module-name> --force
+```
+
+Use `--refresh` with migrations to run reset SQL, clear that module's lifecycle history, and rerun migrations:
+
+```bash
+npm run db:migrate -- --module <module-name> --refresh
+```
+

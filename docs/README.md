@@ -31,3 +31,7 @@ The module runner can test it through:
 /db/health
 ```
 - [Module Database Lifecycle](module-database-lifecycle.md)
+
+## Documents
+
+- [Module Database Lifecycle](./module-database-lifecycle.md)

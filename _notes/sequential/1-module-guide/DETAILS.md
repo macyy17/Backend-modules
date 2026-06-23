@@ -1576,3 +1576,51 @@ The endpoint should be callable from `/app`.
 A module should be boring to install, boring to test, and boring to copy.
 
 Boring backend modules are good. Exciting backend modules usually mean someone is about to lose a weekend.
+
+## Database Lifecycle Commands
+
+Run lifecycle commands from `server/`.
+
+```bash
+npm run db:migrate
+npm run db:seed
+npm run db:reset
+```
+
+Run one module only:
+
+```bash
+npm run db:migrate -- --module <module-name>
+npm run db:seed -- --module <module-name>
+npm run db:reset -- --module <module-name>
+```
+
+The runner scans:
+
+```txt
+modules/<module-name>/db/migrations/*.sql
+modules/<module-name>/db/seeders/*.sql
+modules/<module-name>/db/reset/*.sql
+```
+
+Migration and seeder files are tracked in `module_runner_db_history` and skipped after they run once.
+
+Use `--force` to rerun recorded files:
+
+```bash
+npm run db:migrate -- --module <module-name> --force
+npm run db:seed -- --module <module-name> --force
+```
+
+Use `--refresh` with migrations to run reset SQL, clear lifecycle history for that module, and rerun migrations:
+
+```bash
+npm run db:migrate -- --module <module-name> --refresh
+```
+
+Use `db:reset` for a full local rebuild: reset SQL, migrations, then seeders.
+
+```bash
+npm run db:reset -- --module <module-name>
+```
+

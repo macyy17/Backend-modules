@@ -1,49 +1,78 @@
 # Module Database Lifecycle
 
-The module runner server owns common database lifecycle commands for portable modules.
+The module runner server owns database lifecycle commands for portable modules.
 
-From `server/`, run:
+Run from `server/`:
 
 ```bash
 npm run db:migrate
 npm run db:seed
+npm run db:reset
 ```
 
-By default, each command scans every module under `../modules` and runs sorted SQL files from:
+## Module SQL Layout
+
+A module can provide SQL files here:
 
 ```txt
 modules/<module-name>/db/migrations/*.sql
 modules/<module-name>/db/seeders/*.sql
+modules/<module-name>/db/reset/*.sql
 ```
 
-To run one module only:
+Files run in sorted filename order.
 
-```bash
-npm run db:migrate -- --module expense-calculator
-npm run db:seed -- --module expense-calculator
-```
+## Tracking
 
-The runner creates and uses this table:
+The runner tracks executed files in:
 
 ```txt
 module_runner_db_history
 ```
 
-Once a file is recorded, it is skipped on future runs.
+Migration and seeder files are skipped after they run once.
 
-To rerun recorded files intentionally:
+## Run One Module
 
 ```bash
+cd server
+npm run db:migrate -- --module expense-calculator
+npm run db:seed -- --module expense-calculator
+```
+
+## Force
+
+```bash
+cd server
 npm run db:migrate -- --module expense-calculator --force
 npm run db:seed -- --module expense-calculator --force
 ```
 
-Typical setup after clone:
+## Refresh Migrations
 
 ```bash
 cd server
-npm install
-npm run db:migrate
-npm run db:seed
-npm run dev
+npm run db:migrate -- --module expense-calculator --refresh
 ```
+
+Refresh behavior:
+
+1. Runs `db/reset/*.sql` if present.
+2. Clears that module's lifecycle history.
+3. Reruns migrations.
+
+## Reset
+
+```bash
+cd server
+npm run db:reset -- --module expense-calculator
+```
+
+Reset behavior:
+
+1. Runs reset SQL.
+2. Clears that module's lifecycle history.
+3. Reruns migrations.
+4. Reruns seeders.
+
+Use reset for local rebuilds. It is destructive for that module's tables.

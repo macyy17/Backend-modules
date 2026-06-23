@@ -7,26 +7,26 @@ const DEFAULT_PORT = 3333;
 const DEFAULT_DATABASE_URL = 'postgresql://postgres:postgres@localhost:5432/module_runner';
 
 function readEnvFile(filePath: string): Record<string, string> {
-  if (!fs.existsSync(filePath)) {
-    return {};
-  }
+  if (!fs.existsSync(filePath)) return {};
 
   const values: Record<string, string> = {};
   const lines = fs.readFileSync(filePath, 'utf8').split(/\r?\n/);
   for (const line of lines) {
     const trimmed = line.trim();
-    if (!trimmed || trimmed.startsWith('#')) {
-      continue;
-    }
+    if (!trimmed || trimmed.startsWith('#')) continue;
     const equalsIndex = trimmed.indexOf('=');
-    if (equalsIndex < 1) {
-      continue;
-    }
+    if (equalsIndex < 1) continue;
     const key = trimmed.slice(0, equalsIndex).trim();
     const rawValue = trimmed.slice(equalsIndex + 1).trim();
     values[key] = rawValue.replace(/^['"]|['"]$/g, '');
   }
   return values;
+}
+
+function hydrateProcessEnv(fileEnv: Record<string, string>): void {
+  for (const [key, value] of Object.entries(fileEnv)) {
+    if (process.env[key] === undefined) process.env[key] = value;
+  }
 }
 
 function firstValue(...values: Array<string | undefined>): string | undefined {
@@ -42,9 +42,7 @@ function buildDatabaseUrl(env: Record<string, string | undefined>, fileEnv: Reco
     fileEnv.POSTGRES_URL,
     fileEnv.MODULE_RUNNER_DATABASE_URL,
   );
-  if (direct) {
-    return direct;
-  }
+  if (direct) return direct;
 
   const user = firstValue(env.PGUSER, fileEnv.PGUSER) || 'postgres';
   const password = firstValue(env.PGPASSWORD, fileEnv.PGPASSWORD) || 'postgres';
@@ -57,9 +55,7 @@ function buildDatabaseUrl(env: Record<string, string | undefined>, fileEnv: Reco
 export function maskDatabaseUrl(databaseUrl: string): string {
   try {
     const parsed = new URL(databaseUrl);
-    if (parsed.password) {
-      parsed.password = '****';
-    }
+    if (parsed.password) parsed.password = '****';
     return parsed.toString();
   } catch (_error) {
     return databaseUrl.replace(/:\/\/([^:]+):([^@]+)@/, '://$1:****@');
@@ -75,6 +71,8 @@ export function loadRunnerConfig(): RunnerConfig {
     ...readEnvFile(path.join(projectRoot, '.env')),
     ...readEnvFile(path.join(serverRoot, '.env')),
   };
+  hydrateProcessEnv(fileEnv);
+
   const env = process.env;
   const portText = firstValue(env.PORT, fileEnv.PORT) || String(DEFAULT_PORT);
   const port = Number.parseInt(portText, 10);

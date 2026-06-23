@@ -1,0 +1,53 @@
+{
+  "name": "translator",
+  "title": "Translator",
+  "description": "Translate text between any source and target language using Groq llama-3.3-70b-versatile with structured function output.",
+  "endpoints": [
+    {
+      "id": "translate-get",
+      "method": "GET",
+      "path": "/translate",
+      "title": "Translate Text With Query Params",
+      "description": "Translate text using query fields: text, from, and to. Use from=auto to detect the source language.",
+      "headers": {},
+      "cookies": {},
+      "query": {
+        "text": "Hello world",
+        "from": "auto",
+        "to": "Urdu"
+      },
+      "body": null,
+      "response": {
+        "translatedText": "Translated text here",
+        "from": "English",
+        "to": "Urdu",
+        "provider": "groq",
+        "model": "llama-3.3-70b-versatile"
+      }
+    },
+    {
+      "id": "translate-post",
+      "method": "POST",
+      "path": "/translate",
+      "title": "Translate Text With JSON Body",
+      "description": "Translate text using JSON body fields: text, from, and to. Use from=auto to detect the source language.",
+      "headers": {
+        "content-type": "application/json"
+      },
+      "cookies": {},
+      "query": {},
+      "body": {
+        "text": "Good morning",
+        "from": "English",
+        "to": "Spanish"
+      },
+      "response": {
+        "translatedText": "Buenos dias",
+        "from": "English",
+        "to": "Spanish",
+        "provider": "groq",
+        "model": "llama-3.3-70b-versatile"
+      }
+    }
+  ]
+}

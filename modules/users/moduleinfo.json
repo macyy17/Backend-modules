@@ -1,55 +1,29 @@
 {
   "name": "users",
   "title": "Users",
-  "description": "User login, logout, and internal session status module with one user role.",
+  "description": "Browser sign-in and guarded user page for one user role.",
   "endpoints": [
     {
       "id": "login-page",
       "method": "GET",
       "path": "/login",
       "title": "Login Page",
-      "description": "Render the browser login page.",
+      "description": "Render the app sign-in page. Accepts redirect query param, defaulting to /.",
       "headers": {},
-      "cookies": {},
-      "query": {},
+      "query": { "redirect": "/userstatus" },
       "body": null,
       "response": "HTML login page"
     },
     {
-      "id": "login",
-      "method": "POST",
-      "path": "/login",
-      "title": "Login",
-      "description": "Log in with email and credential. Sets the users_session cookie.",
-      "headers": { "content-type": "application/json" },
-      "cookies": {},
-      "query": {},
-      "body": { "email": "user@example.com", "credential": "credential123" },
-      "response": { "authenticated": true, "user": { "email": "user@example.com", "role": "user" }, "expiresAt": "..." }
-    },
-    {
-      "id": "auth-status",
+      "id": "user-status-page",
       "method": "GET",
-      "path": "/internal/auth/status",
-      "title": "Internal Auth Status",
-      "description": "Check whether the current request has a valid logged-in session.",
+      "path": "/userstatus",
+      "title": "User Status Page",
+      "description": "Render the signed-in user page, or redirect to login.",
       "headers": {},
-      "cookies": { "users_session": "<session key>" },
       "query": {},
       "body": null,
-      "response": { "authenticated": true, "user": { "email": "user@example.com", "role": "user" } }
-    },
-    {
-      "id": "logout",
-      "method": "POST",
-      "path": "/logout",
-      "title": "Logout",
-      "description": "Delete the current session and clear the session cookie.",
-      "headers": {},
-      "cookies": { "users_session": "<session key>" },
-      "query": {},
-      "body": null,
-      "response": { "loggedOut": true }
+      "response": "HTML page or redirect"
     }
   ]
 }

@@ -21,6 +21,7 @@ function read_boolean(value: string | undefined, fallback: boolean): boolean {
 
 function build_session_config(): UsersSessionConfig {
   return {
+    appName: process.env.APP_NAME || 'Local App',
     cookieName: process.env.USERS_SESSION_COOKIE || 'users_session',
     sessionTtlSeconds: read_positive_integer(process.env.USERS_SESSION_TTL_SECONDS, 604800),
     cookieSecure: read_boolean(process.env.USERS_COOKIE_SECURE, false),
@@ -58,6 +59,10 @@ export async function registerRoutes(context: ModuleRegisterContext): Promise<vo
 
   context.addRoute('POST', '/logout', users_controller.logout.bind(users_controller), {
     description: 'Log out the current session and clear the session cookie.',
+  });
+
+  context.addRoute('GET', '/userstatus', users_controller.user_status_page.bind(users_controller), {
+    description: 'Render the logged-in user status page. Redirects to /login when not logged in.',
   });
 
   context.addRoute('GET', '/internal/auth/status', users_controller.auth_status.bind(users_controller), {

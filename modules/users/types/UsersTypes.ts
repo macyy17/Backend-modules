@@ -43,6 +43,7 @@ export type AuthStatusResponse = {
 };
 
 export type UsersSessionConfig = {
+  appName: string;
   cookieName: string;
   sessionTtlSeconds: number;
   cookieSecure: boolean;

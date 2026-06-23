@@ -1,38 +1,35 @@
 # Users Module
 
-The users module provides a browser login page, logout method, and internal session status check.
+Browser sign-in module for one role: `user`.
 
-It has one role only:
+## Public Pages
 
 ```txt
-user
+GET /login?redirect=/userstatus
+GET /userstatus
 ```
 
-## Endpoints
+`/userstatus` is guarded. Visitors without a valid browser state are redirected to `/login?redirect=/userstatus`.
 
-| Method | Path | Purpose |
-| --- | --- | --- |
-| GET | `/login` | Browser login page. |
-| POST | `/login` | Log in and set the session cookie. |
-| POST | `/logout` | Log out and clear the session cookie. |
-| GET | `/internal/auth/status` | Internal auth/session check. |
+## Methods
 
-## Environment
-
-Copy:
-
-```bash
-cp modules/users/.env.example modules/users/.env
+```txt
+POST /login
+POST /logout
+GET /internal/auth/status
 ```
 
-## Database Setup
+The login page itself only shows the sign-in form. It does not show debug controls.
 
-```bash
-psql "$DATABASE_URL" -f modules/users/db/migrations/001_create_users_and_sessions.sql
-psql "$DATABASE_URL" -f modules/users/db/seeders/001_seed_local_user.sql
+## App Name
+
+Set the app label in the module env file:
+
+```txt
+APP_NAME=Macyy
 ```
 
-## Local User
+## Local Test User
 
 ```txt
 email: user@example.com
@@ -40,17 +37,9 @@ credential: credential123
 role: user
 ```
 
-## Run With Module Runner
+## Run
 
 ```bash
 cd server
 MODULE=users npm run dev
-```
-
-Open:
-
-```txt
-http://localhost:3333/login
-http://localhost:3333/moduleinfo
-http://localhost:3333/app
 ```

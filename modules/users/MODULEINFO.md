@@ -1,52 +1,23 @@
 # Users Module
 
-Login, logout, and internal session status for a single user role: `user`.
+Browser sign-in for one role: `user`.
 
-## Endpoints
+## Public Pages
 
 | Method | Path | Description |
 | --- | --- | --- |
-| GET | `/login` | Render the login page. |
-| POST | `/login` | Log in with email and credential and set the session cookie. |
-| POST | `/logout` | Log out and clear the session cookie. |
-| GET | `/internal/auth/status` | Internal method to check whether the current request is logged in. |
+| GET | `/login` | Render the app sign-in page. Accepts `redirect`, default `/`. |
+| GET | `/userstatus` | Guarded page. Redirects to `/login?redirect=/userstatus` when the visitor is not signed in. |
 
-## Seeded Local User
+## App Name
 
-| Field | Value |
-| --- | --- |
-| Email | `user@example.com` |
-| Credential | `credential123` |
-| Role | `user` |
+The page title uses module env:
 
-## POST `/login`
-
-```json
-{
-  "email": "user@example.com",
-  "credential": "credential123"
-}
-```
-
-The response sets the `users_session` HTTP-only cookie.
-
-## GET `/internal/auth/status`
-
-With a valid cookie:
-
-```json
-{
-  "authenticated": true,
-  "user": {
-    "email": "user@example.com",
-    "role": "user"
-  }
-}
+```txt
+APP_NAME=Macyy
 ```
 
 ## Database
-
-Tables:
 
 ```txt
 users

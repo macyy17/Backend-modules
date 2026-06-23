@@ -18,3 +18,17 @@ Current task:
 let me know when its done. so that we can move next.
 
 ---
+
+Correction:
+- use typescript as our modules shall use typescript
+- include postgress db details in module runner server, so that it uses those login details for accessing db (user, password and db name all in psql string)
+- so that it is ready for use.
+
+also for speeding things up:
+- give me a big bash, that i paste in terminal
+- it runs and overrides output in ~/out.txt for each time
+- so that i can share with you and you can continue.
+
+big bash loop
+
+--

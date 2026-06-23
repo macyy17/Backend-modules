@@ -1,14 +1,25 @@
 {
   "name": "module-runner-server",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
-  "description": "Interactive local runner for testing portable backend modules.",
-  "type": "commonjs",
+  "description": "Interactive TypeScript runner for testing portable backend modules.",
+  "type": "module",
   "scripts": {
-    "dev": "node src/main.js",
-    "check": "node --check src/main.js && node --check src/cli/selectModule.js && node --check src/modules/discoverModules.js && node --check src/modules/loadModule.js && node --check src/modules/moduleRoutes.js && node --check src/http/createServer.js && node --check src/http/markdown.js && node --check src/http/renderAppPage.js && node --check src/http/renderModuleInfo.js && node --check src/http/requestSender.js && node --check src/http/response.js"
+    "dev": "tsx src/main.ts",
+    "check": "tsc --noEmit",
+    "start": "node dist/main.js",
+    "build": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "pg": "^8.13.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "@types/pg": "^8.11.10",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
   },
   "engines": {
-    "node": ">=18"
+    "node": ">=20"
   }
 }

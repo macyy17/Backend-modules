@@ -1,11 +1,12 @@
 # Module Runner Server
 
-Interactive local server for selecting and testing modules from `../modules`.
+Interactive TypeScript server for selecting and testing modules from `../modules`.
 
 ## Usage
 
 ```bash
 cd server
+npm install
 npm run dev
 ```
 
@@ -17,42 +18,47 @@ Useful URLs after startup:
 - `/app` opens a small Postman-like request sender.
 - `/app/presets` returns endpoint presets from `moduleinfo.json`.
 - `/app/request` sends raw test requests through the runner.
+- `/db/health` checks PostgreSQL connectivity.
+- `/runner/config` shows safe runner config with the DB password masked.
 
-## Optional environment variables
+## Environment variables
 
-- `MODULE=<module-name>` skips the interactive selector.
-- `PORT=3333` changes the server port.
+Create `server/.env` or export variables before running:
 
-## Module metadata
-
-The runner accepts empty `MODULEINFO.md` and empty `moduleinfo.json` so early modules can still be tested. A useful `moduleinfo.json` looks like this:
-
-```json
-{
-  "name": "translator",
-  "title": "Translator",
-  "description": "Translation module.",
-  "endpoints": [
-    {
-      "method": "POST",
-      "path": "/translate",
-      "description": "Translate text.",
-      "headers": {},
-      "query": {},
-      "body": {
-        "text": "Hello",
-        "from": "en",
-        "to": "ur"
-      }
-    }
-  ]
-}
+```bash
+MODULE=translator
+PORT=3333
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/module_runner
 ```
 
-## Module routes
+`DATABASE_URL` is the preferred PostgreSQL string. The runner also accepts `POSTGRES_URL` or `MODULE_RUNNER_DATABASE_URL`.
 
-If a module has route files, the runner tries these paths:
+If no connection string is provided, the runner uses:
 
+```txt
+postgresql://postgres:postgres@localhost:5432/module_runner
+```
+
+Module handlers receive database access in their request object:
+
+```ts
+export const routes = [
+  {
+    method: 'GET',
+    path: '/health',
+    async handler(request) {
+      const result = await request.database.query('select 1 as ok');
+      return { status: 200, body: result.rows[0] };
+    },
+  },
+];
+```
+
+Route registration files may be TypeScript or JavaScript:
+
+- `routes/index.ts`
+- `routes.ts`
+- `index.ts`
 - `routes/index.js`
 - `routes/index.cjs`
 - `routes.js`
@@ -62,30 +68,5 @@ Supported exports:
 
 - `registerRoutes(context)` where `context.addRoute(method, path, handler)` registers a route.
 - `routes` array with `{ method, path, handler }` entries.
-
-Handler signature:
-
-```js
-async function handler(request) {
-  return {
-    status: 200,
-    headers: { "content-type": "application/json" },
-    body: { ok: true }
-  };
-}
-```
-
-Request shape:
-
-```js
-{
-  method,
-  path,
-  headers,
-  cookies,
-  query,
-  body,
-  rawBody,
-  params
-}
-```
+- default function receiving the same context.
+- default route array.

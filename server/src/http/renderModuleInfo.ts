@@ -1,15 +1,13 @@
-const { escapeHtml, renderMarkdown } = require('./markdown');
+import type { DatabaseService, LoadedModule } from '../types.js';
+import { escapeHtml, renderMarkdown } from './markdown.js';
 
-function renderWarnings(warnings) {
-  if (!warnings || warnings.length === 0) {
-    return '';
-  }
-
+function renderWarnings(warnings: string[]): string {
+  if (!warnings || warnings.length === 0) return '';
   const items = warnings.map((warning) => `<li>${escapeHtml(warning)}</li>`).join('');
   return `<aside class="warning"><strong>Metadata warnings</strong><ul>${items}</ul></aside>`;
 }
 
-function renderModuleInfo(selectedModule) {
+export function renderModuleInfo(selectedModule: LoadedModule, database: DatabaseService): string {
   const title = selectedModule.moduleInfoJson.title || selectedModule.name;
   const description = selectedModule.moduleInfoJson.description || '';
   const endpointCount = selectedModule.moduleInfoJson.endpoints.length;
@@ -43,12 +41,14 @@ function renderModuleInfo(selectedModule) {
     <div class="topbar">
       <div>
         <h1>${escapeHtml(title)}</h1>
-        <p class="meta">Module: ${escapeHtml(selectedModule.name)} · Endpoint presets: ${endpointCount}</p>
+        <p class="meta">Module: ${escapeHtml(selectedModule.name)} | Endpoint presets: ${endpointCount}</p>
+        <p class="meta">PostgreSQL: ${escapeHtml(database.connectionStringMasked)}</p>
         ${description ? `<p>${escapeHtml(description)}</p>` : ''}
       </div>
       <nav class="nav">
         <a href="/app">Open /app</a>
         <a href="/app/presets">Presets JSON</a>
+        <a href="/db/health">DB health</a>
       </nav>
     </div>
     ${warnings}
@@ -57,5 +57,3 @@ function renderModuleInfo(selectedModule) {
 </body>
 </html>`;
 }
-
-module.exports = { renderModuleInfo };

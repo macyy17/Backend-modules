@@ -1,4 +1,4 @@
-Pre-req: Study guide at `_notes/sequential/1-module-guide/README.md`
+Pre-req: Study guide at `_notes/sequential/1-module-guide/README.md` and read `./docs/`
 
 Current task:
 - Create a module named `users`

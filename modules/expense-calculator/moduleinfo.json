@@ -1,0 +1,116 @@
+{
+  "name": "expense-calculator",
+  "title": "Expense Calculator",
+  "description": "A comprehensive expense tracking module that allows users to manage, track, and analyze their expenses with category grouping and totals.",
+  "endpoints": [
+    {
+      "id": "add-expense",
+      "method": "POST",
+      "path": "/expenses",
+      "title": "Add New Expense",
+      "description": "Add a new expense - Required fields: name (string), amount (number), category (string), date (YYYY-MM-DD)",
+      "headers": {
+        "content-type": "application/json"
+      },
+      "cookies": {},
+      "query": {},
+      "body": {
+        "name": "Grocery shopping",
+        "amount": 45.50,
+        "category": "Food",
+        "date": "2024-06-15"
+      },
+      "response": {
+        "success": true,
+        "expense": {
+          "id": "550e8400-e29b-41d4-a716-446655440000",
+          "name": "Grocery shopping",
+          "amount": 45.50,
+          "category": "Food",
+          "date": "2024-06-15"
+        }
+      }
+    },
+    {
+      "id": "get-all-expenses",
+      "method": "GET",
+      "path": "/expenses",
+      "title": "Get All Expenses",
+      "description": "Retrieve all tracked expenses sorted by date (newest first). No parameters required.",
+      "headers": {},
+      "cookies": {},
+      "query": {},
+      "body": null,
+      "response": {
+        "expenses": [
+          {
+            "id": "550e8400-e29b-41d4-a716-446655440000",
+            "name": "Grocery shopping",
+            "amount": 45.50,
+            "category": "Food",
+            "date": "2024-06-15"
+          }
+        ],
+        "count": 1
+      }
+    },
+    {
+      "id": "remove-expense",
+      "method": "DELETE",
+      "path": "/expenses",
+      "title": "Remove Expense",
+      "description": "Remove an expense by ID. Use query parameter: ?id=<expense-id>",
+      "headers": {},
+      "cookies": {},
+      "query": {
+        "id": "550e8400-e29b-41d4-a716-446655440000"
+      },
+      "body": null,
+      "response": {
+        "success": true,
+        "message": "Expense with ID \"550e8400-e29b-41d4-a716-446655440000\" has been removed."
+      }
+    },
+    {
+      "id": "get-total",
+      "method": "GET",
+      "path": "/expenses/total",
+      "title": "Calculate Total Expenses",
+      "description": "Get the total sum of all expenses in USD. No parameters required.",
+      "headers": {},
+      "cookies": {},
+      "query": {},
+      "body": null,
+      "response": {
+        "total": 75.50,
+        "currency": "USD"
+      }
+    },
+    {
+      "id": "get-by-category",
+      "method": "GET",
+      "path": "/expenses/by-category",
+      "title": "Get Expenses by Category",
+      "description": "Get all expenses grouped by category with subtotals and counts. No parameters required.",
+      "headers": {},
+      "cookies": {},
+      "query": {},
+      "body": null,
+      "response": {
+        "Food": {
+          "total": 45.50,
+          "count": 1,
+          "expenses": [
+            {
+              "id": "550e8400-e29b-41d4-a716-446655440000",
+              "name": "Grocery shopping",
+              "amount": 45.50,
+              "category": "Food",
+              "date": "2024-06-15"
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

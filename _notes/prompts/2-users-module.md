@@ -32,3 +32,11 @@ as this ia a real login module. show login page only. and also make a /userstatu
 login page also accepts redirect url (default /) in query params. and make a nice ui using tailwind. it should taake "APP_NAME" from .env. and display as the login page of that app.
 
 ---
+
+i cannot login, it always say invalid / in correct. (for users) either tell me user & pass or solve problem (if any)
+
+---
+
+update `_notes/sequential/1-module-guide/DETAILS.md` and `./docs/` as well so they are not left behind (if required)
+
+---

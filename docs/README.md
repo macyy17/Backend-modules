@@ -30,3 +30,4 @@ The module runner can test it through:
 /runner/config
 /db/health
 ```
+- [Module Database Lifecycle](module-database-lifecycle.md)

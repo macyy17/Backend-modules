@@ -117,3 +117,19 @@ quick check:
 make required changes and write docs/ after that (if / when successfull)
 
 ---
+
+In our server, if i add a module and use it after clone on a new system, i do not haev a way for running npm run db:migrate or db:seed. checkout api-dev skill and add accordingly.
+
+migrations folder keep track and does not re-migrates or re-seeds unless user specified --force.
+
+dev now. and test with expense-calculator
+
+---
+
+Create a new module for testing, that has a todo lists management. with a ui as well (i.e., /todo returns a simple page).
+
+so that i can test migraitons with it as well.
+
+after making module, remember to delete tables so that i can try from server lately.
+
+---

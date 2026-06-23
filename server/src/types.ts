@@ -45,6 +45,8 @@ export type RunnerConfig = {
   port: number;
   databaseUrl: string;
   databaseUrlMasked: string;
+  envFilesLoaded: string[];
+  moduleEnvPath?: string;
 };
 
 export type DatabaseService = {

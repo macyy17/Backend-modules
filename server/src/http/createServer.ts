@@ -1,4 +1,5 @@
 import http, { type IncomingMessage, type ServerResponse } from 'node:http';
+import path from 'node:path';
 import { URL } from 'node:url';
 import type { DatabaseService, LoadedModule, JsonObject, ModuleRoute, RunnerConfig } from '../types.js';
 import { sendJson, sendHtml, sendText } from './response.js';
@@ -12,15 +13,19 @@ function readBody(request: IncomingMessage): Promise<string> {
   return new Promise((resolve, reject) => {
     const chunks: Buffer[] = [];
     let size = 0;
+
     request.on('data', (chunk: Buffer) => {
       size += chunk.length;
+
       if (size > BODY_LIMIT_BYTES) {
         reject(new Error('Request body is too large. Limit is 2MB.'));
         request.destroy();
         return;
       }
+
       chunks.push(chunk);
     });
+
     request.on('end', () => resolve(Buffer.concat(chunks).toString('utf8')));
     request.on('error', reject);
   });
@@ -41,11 +46,17 @@ function sendModuleResult(response: ServerResponse, result: { status?: number; h
   const body = result.body === undefined ? null : result.body;
   const headers = result.headers || {};
   const contentType = String(headers['content-type'] || headers['Content-Type'] || 'application/json');
+
   if (contentType.includes('application/json') || typeof body === 'object') {
     sendJson(response, result.status || 200, body, headers);
     return;
   }
+
   sendText(response, result.status || 200, String(body), contentType, headers);
+}
+
+function relativeConfigPath(config: RunnerConfig, filePath: string): string {
+  return path.relative(config.projectRoot, filePath) || filePath;
 }
 
 export function createServer(input: { selectedModule: LoadedModule; moduleRoutes: ModuleRoute[]; database: DatabaseService; config: RunnerConfig }) {
@@ -95,6 +106,8 @@ export function createServer(input: { selectedModule: LoadedModule; moduleRoutes
           module: selectedModule.name,
           port: config.port,
           databaseUrl: config.databaseUrlMasked,
+          envFilesLoaded: config.envFilesLoaded.map((filePath) => relativeConfigPath(config, filePath)),
+          moduleEnvLoaded: config.envFilesLoaded.includes(config.moduleEnvPath || ''),
           moduleRoutes: moduleRoutes.map((route) => ({ method: route.method, path: route.path, description: route.description })),
         });
         return;
@@ -113,6 +126,7 @@ export function createServer(input: { selectedModule: LoadedModule; moduleRoutes
 
       const rawBody = await readBody(request);
       let parsedBody: unknown = null;
+
       try {
         parsedBody = parseJsonBody(rawBody);
       } catch {
@@ -130,6 +144,7 @@ export function createServer(input: { selectedModule: LoadedModule; moduleRoutes
         body: parsedBody,
         rawBody,
       });
+
       sendModuleResult(response, result);
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);

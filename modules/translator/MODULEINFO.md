@@ -43,23 +43,33 @@ Response:
 
 ```json
 {
-  "translatedText": "Buenos dias",
+  "translatedText": "Buenos días",
   "from": "English",
-  "to": "Spanish",
-  "provider": "groq",
-  "model": "llama-3.3-70b-versatile"
+  "to": "Spanish"
 }
 ```
 
 ## Environment
 
-Required:
+Required module env file:
 
 ```txt
-GROQ_API_KEY=<your Groq API key>
+modules/translator/.env
 ```
 
-The module runner reads this from root `.env` or `server/.env`.
+Required value:
+
+```txt
+GROQ_API_KEY=<your Groq key>
+```
+
+Optional value:
+
+```txt
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/module_runner
+```
+
+The module runner loads module env after selecting the module, so this file belongs with the module, not the generic server.
 
 ## Database
 

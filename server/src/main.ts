@@ -1,4 +1,4 @@
-import { loadEnvFile } from './config/loadEnvFile.js';
+import path from 'node:path';
 import { createServer } from './http/createServer.js';
 import { selectModule } from './cli/selectModule.js';
 import { discoverModules } from './modules/discoverModules.js';
@@ -6,33 +6,28 @@ import { loadModule } from './modules/loadModule.js';
 import { loadModuleRoutes } from './modules/moduleRoutes.js';
 import { loadRunnerConfig } from './config/loadRunnerConfig.js';
 import { createDatabase } from './database/createDatabase.js';
-loadEnvFile(undefined, {
-  override: true,
-  preserveKeys: ['MODULE', 'PORT', 'DATABASE_URL', 'POSTGRES_URL', 'MODULE_RUNNER_DATABASE_URL'],
-});
 
 async function main(): Promise<void> {
-  const config = loadRunnerConfig();
-  const database = createDatabase(config.databaseUrl);
-  const modules = await discoverModules(config.modulesRoot);
+  const baseConfig = loadRunnerConfig();
+  const modules = await discoverModules(baseConfig.modulesRoot);
 
   if (modules.length === 0) {
     console.error('No runnable modules found in ../modules. A module needs MODULEINFO.md or moduleinfo.json.');
     process.exitCode = 1;
-    await database.close();
     return;
   }
 
-  const selectedModuleName = config.selectedModuleName || await selectModule(modules);
+  const selectedModuleName = baseConfig.selectedModuleName || await selectModule(modules);
   const selectedModule = modules.find((item) => item.name === selectedModuleName);
 
   if (!selectedModule) {
     console.error(`Module "${selectedModuleName}" was not found. Available modules: ${modules.map((item) => item.name).join(', ')}`);
     process.exitCode = 1;
-    await database.close();
     return;
   }
 
+  const config = loadRunnerConfig({ moduleEnvPath: path.join(selectedModule.path, '.env') });
+  const database = createDatabase(config.databaseUrl);
   const loadedModule = await loadModule(selectedModule);
   const moduleRoutes = await loadModuleRoutes(loadedModule, {
     database,
@@ -50,6 +45,7 @@ async function main(): Promise<void> {
     console.log(`App tester: ${baseUrl}/app`);
     console.log(`DB health: ${baseUrl}/db/health`);
     console.log(`PostgreSQL: ${database.connectionStringMasked}`);
+    console.log(`Env files loaded: ${config.envFilesLoaded.length}`);
     console.log(moduleRoutes.length === 0 ? 'No module routes were registered. /moduleinfo and /app are still available.' : `Registered module routes: ${moduleRoutes.length}`);
   });
 
@@ -58,6 +54,7 @@ async function main(): Promise<void> {
     await database.close();
     process.exit(0);
   };
+
   process.on('SIGINT', () => { void shutdown(); });
   process.on('SIGTERM', () => { void shutdown(); });
 }

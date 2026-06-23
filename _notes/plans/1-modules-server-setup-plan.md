@@ -501,3 +501,15 @@ Also verify:
 The first version should **not require completed module docs or working module endpoints**.
 
 Reason: the current `translator` module is mostly empty. So the runner should be useful immediately as a harness, then become stricter after `_notes/sequential/1-module-guide/DETAILS.md` is completed.
+
+---
+
+Write `docs/usage.md` that has guide on how to use this module specifically
+
+so that i can provide developer a zip containing module as well as that dir from docs/usage.md and they can use in their project easily.
+
+it should be simple short and to the point.
+
+give me usage.md in chat insetad of writing with EigenMCP
+
+---

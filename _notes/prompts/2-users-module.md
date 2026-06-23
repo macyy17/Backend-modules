@@ -35,8 +35,3 @@ login page also accepts redirect url (default /) in query params. and make a nic
 
 i cannot login, it always say invalid / in correct. (for users) either tell me user & pass or solve problem (if any)
 
----
-
-update `_notes/sequential/1-module-guide/DETAILS.md` and `./docs/` as well so they are not left behind (if required)
-
----

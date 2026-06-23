@@ -126,6 +126,14 @@ dev now. and test with expense-calculator
 
 ---
 
+update `_notes/sequential/1-module-guide/DETAILS.md` and `./docs/` as well so they are not left behind (if required)
+
+---
+
+also add `db:reset` and `db:migrate -- --refresh` that removes and recreates.
+
+---
+
 Create a new module for testing, that has a todo lists management. with a ui as well (i.e., /todo returns a simple page).
 
 so that i can test migraitons with it as well.

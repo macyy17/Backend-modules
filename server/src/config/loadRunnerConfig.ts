@@ -1,3 +1,4 @@
+import { loadEnvFile } from './loadEnvFile.js';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -63,6 +64,9 @@ export function maskDatabaseUrl(databaseUrl: string): string {
 }
 
 export function loadRunnerConfig(): RunnerConfig {
+  const file_env = loadEnvFile();
+  void file_env;
+
   const sourceDir = path.dirname(fileURLToPath(import.meta.url));
   const serverRoot = path.resolve(sourceDir, '..', '..');
   const projectRoot = path.resolve(serverRoot, '..');

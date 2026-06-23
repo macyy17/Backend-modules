@@ -1,138 +1,148 @@
-import { normalize_language_code, normalize_language_name } from '../core/normalizeLanguageCode.js';
-import type { GroqToolTranslation, TranslateRequest, TranslateResponse } from '../types/TranslatorTypes.js';
+import type { TranslateRequest, TranslateResponse } from '../types/TranslatorTypes.js';
 
-const GROQ_CHAT_COMPLETIONS_URL = 'https://api.groq.com/openai/v1/chat/completions';
+type GroqToolArguments = {
+  translated_text: string;
+  detected_from: string;
+  to: string;
+};
+
 const GROQ_MODEL = 'llama-3.3-70b-versatile';
-const RETURN_TRANSLATION = 'return_translation';
+const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
+const TOOL_NAME = 'return_translation';
 
-type GroqToolCall = {
-  function?: {
-    name?: string;
-    arguments?: string;
-  };
-};
+function get_groq_api_key(): string {
+  const key = process.env.GROQ_API_KEY?.trim();
 
-type GroqChatResponse = {
-  choices?: Array<{
-    message?: {
-      content?: string | null;
-      tool_calls?: GroqToolCall[];
-    };
-  }>;
-  error?: {
-    message?: string;
-  };
-};
-
-function read_groq_api_key(): string {
-  const api_key = process.env.GROQ_API_KEY || '';
-  if (!api_key.trim()) {
-    throw new Error('GROQ_API_KEY is missing. Add it to server/.env or root .env.');
+  if (!key) {
+    throw new Error('GROQ_API_KEY is missing.');
   }
-  return api_key.trim();
+
+  if (!key.startsWith('gsk_')) {
+    throw new Error('GROQ_API_KEY is invalid.');
+  }
+
+  return key;
 }
 
-function parse_tool_arguments(value: string | undefined): GroqToolTranslation | null {
-  if (!value) return null;
-  try {
-    const parsed = JSON.parse(value) as Partial<GroqToolTranslation>;
-    if (typeof parsed.translated_text !== 'string') return null;
-    return {
-      translated_text: parsed.translated_text,
-      detected_from: typeof parsed.detected_from === 'string' ? parsed.detected_from : 'auto',
-      to: typeof parsed.to === 'string' ? parsed.to : 'unknown',
-    };
-  } catch (_error) {
-    return null;
+function parse_tool_arguments(value: unknown): GroqToolArguments {
+  if (typeof value !== 'string' || !value.trim()) {
+    throw new Error('Groq did not return tool arguments.');
   }
-}
 
-function build_groq_payload(text: string, from: string, to: string): Record<string, unknown> {
+  const parsed = JSON.parse(value) as Partial<GroqToolArguments>;
+
+  if (typeof parsed.translated_text !== 'string') {
+    throw new Error('Groq tool response is missing translated_text.');
+  }
+
   return {
-    model: GROQ_MODEL,
-    temperature: 0,
-    messages: [
-      {
-        role: 'system',
-        content: 'You are a translation engine. Translate faithfully. Preserve meaning, numbers, names, formatting, and tone. Use the required structured function response only.',
-      },
-      {
-        role: 'user',
-        content: `Translate this text. Source language: ${from}. Target language: ${to}. Text: ${text}`,
-      },
-    ],
-    tools: [
-      {
-        type: 'function',
-        function: {
-          name: RETURN_TRANSLATION,
-          description: 'Return the completed translation using structured fields.',
-          parameters: {
-            type: 'object',
-            additionalProperties: false,
-            properties: {
-              translated_text: { type: 'string' },
-              detected_from: { type: 'string' },
-              to: { type: 'string' },
-            },
-            required: ['translated_text', 'detected_from', 'to'],
-          },
-        },
-      },
-    ],
-    tool_choice: {
-      type: 'function',
-      function: {
-        name: RETURN_TRANSLATION,
-      },
-    },
+    translated_text: parsed.translated_text,
+    detected_from: typeof parsed.detected_from === 'string' ? parsed.detected_from : 'auto',
+    to: typeof parsed.to === 'string' ? parsed.to : 'unknown'
   };
 }
 
 export class TranslatorService {
   async translate(payload: TranslateRequest): Promise<TranslateResponse> {
-    const text = payload.text.trim();
-    const from = normalize_language_code(payload.from);
-    const to = normalize_language_name(payload.to);
+    const api_key = get_groq_api_key();
 
-    const response = await fetch(GROQ_CHAT_COMPLETIONS_URL, {
+    const response = await fetch(GROQ_URL, {
       method: 'POST',
       headers: {
-        authorization: `Bearer ${read_groq_api_key()}`,
-        'content-type': 'application/json',
+        authorization: `Bearer ${api_key}`,
+        'content-type': 'application/json'
       },
-      body: JSON.stringify(build_groq_payload(text, from, to)),
+      body: JSON.stringify({
+        model: GROQ_MODEL,
+        temperature: 0,
+        messages: [
+          {
+            role: 'system',
+            content: [
+              'You are a translation engine.',
+              'Translate faithfully.',
+              'Preserve meaning, tone, names, numbers, and formatting where possible.',
+              'If source language is auto, detect it.',
+              'You must call the provided tool with the final translation.'
+            ].join(' ')
+          },
+          {
+            role: 'user',
+            content: [
+              `Text: ${payload.text}`,
+              `Source language: ${payload.from}`,
+              `Target language: ${payload.to}`
+            ].join('\n')
+          }
+        ],
+        tools: [
+          {
+            type: 'function',
+            function: {
+              name: TOOL_NAME,
+              description: 'Return the completed translation.',
+              parameters: {
+                type: 'object',
+                additionalProperties: false,
+                properties: {
+                  translated_text: {
+                    type: 'string',
+                    description: 'The translated text.'
+                  },
+                  detected_from: {
+                    type: 'string',
+                    description: 'The detected or specified source language.'
+                  },
+                  to: {
+                    type: 'string',
+                    description: 'The target language.'
+                  }
+                },
+                required: ['translated_text', 'detected_from', 'to']
+              }
+            }
+          }
+        ],
+        tool_choice: {
+          type: 'function',
+          function: {
+            name: TOOL_NAME
+          }
+        }
+      })
     });
 
-    const data = await response.json() as GroqChatResponse;
+    const data = await response.json().catch(() => null);
+
     if (!response.ok) {
-      throw new Error(data.error?.message || `Groq API failed with status ${response.status}.`);
+      const message =
+        data && typeof data === 'object' && 'error' in data
+          ? JSON.stringify((data as { error: unknown }).error)
+          : `Groq request failed with HTTP ${response.status}.`;
+
+      throw new Error(message);
     }
 
-    const message = data.choices?.[0]?.message;
-    const selected_call = message?.tool_calls?.find((item) => item.function?.name === RETURN_TRANSLATION);
-    const translated = parse_tool_arguments(selected_call?.function?.arguments);
+    const tool_arguments = (
+      data as {
+        choices?: Array<{
+          message?: {
+            tool_calls?: Array<{
+              function?: {
+                arguments?: unknown;
+              };
+            }>;
+          };
+        }>;
+      }
+    )?.choices?.[0]?.message?.tool_calls?.[0]?.function?.arguments;
 
-    if (translated) {
-      return {
-        translatedText: translated.translated_text,
-        from: translated.detected_from,
-        to: translated.to,
-        provider: 'groq',
-        model: GROQ_MODEL,
-      };
-    }
+    const result = parse_tool_arguments(tool_arguments);
 
-    if (message?.content) {
-      return {
-        translatedText: message.content.trim(),
-        from,
-        to,
-        provider: 'groq',
-        model: GROQ_MODEL,
-      };
-    }
-
-    throw new Error('Groq API returned no translation.');
+    return {
+      translatedText: result.translated_text,
+      from: result.detected_from || payload.from,
+      to: result.to || payload.to
+    };
   }
 }

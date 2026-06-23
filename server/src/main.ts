@@ -1,3 +1,4 @@
+import { loadEnvFile } from './config/loadEnvFile.js';
 import { createServer } from './http/createServer.js';
 import { selectModule } from './cli/selectModule.js';
 import { discoverModules } from './modules/discoverModules.js';
@@ -5,6 +6,7 @@ import { loadModule } from './modules/loadModule.js';
 import { loadModuleRoutes } from './modules/moduleRoutes.js';
 import { loadRunnerConfig } from './config/loadRunnerConfig.js';
 import { createDatabase } from './database/createDatabase.js';
+loadEnvFile();
 
 async function main(): Promise<void> {
   const config = loadRunnerConfig();
